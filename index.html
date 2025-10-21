@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZodiacMatch - Real Dating App</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ... [SAME CSS AS BEFORE - NO CHANGES NEEDED] ... */
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; }
+        :root { --primary:#ff4d6d; --secondary:#ff758f; --dark:#2b2d42; --light:#f8f9fa; --card-bg:#fff; --text:#333; --success:#00c853; --warning:#ffab00; --danger:#ff1744; --shadow:0 4px 20px rgba(0,0,0,0.15); --card-radius:20px; }
+        body { background:linear-gradient(135deg,#1a1a2e,#16213e); color:var(--text); min-height:100vh; padding:20px; display:flex; justify-content:center; align-items:center; }
+        .app-container { width:100%; max-width:480px; height:90vh; background:white; border-radius:30px; overflow:hidden; box-shadow:var(--shadow); display:flex; flex-direction:column; position:relative; }
+        .app-header { display:flex; justify-content:space-between; align-items:center; padding:20px; background:white; z-index:10; }
+        .logo { display:flex; align-items:center; gap:10px; }
+        .logo i { color:var(--primary); font-size:28px; }
+        .logo h1 { font-size:24px; font-weight:700; background:linear-gradient(45deg,var(--primary),var(--secondary)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+        .header-icons { display:flex; gap:20px; }
+        .header-icons i { font-size:22px; color:var(--dark); cursor:pointer; }
+        .main-content { flex:1; position:relative; overflow:hidden; }
+        .card-stack { position:relative; height:100%; padding:0 20px; margin-top:20px; }
+        .card { position:absolute; top:0; left:0; right:0; margin:0 auto; width:90%; height:80%; background:var(--card-bg); border-radius:var(--card-radius); box-shadow:var(--shadow); overflow:hidden; display:flex; flex-direction:column; transition:transform 0.3s ease,opacity 0.3s ease; cursor:grab; }
+        .card-image { height:70%; background-size:cover; background-position:center; position:relative; }
+        .zodiac-badge { position:absolute; top:15px; right:15px; background:rgba(255,255,255,0.9); padding:5px 12px; border-radius:20px; font-weight:600; display:flex; align-items:center; gap:5px; box-shadow:0 2px 10px rgba(0,0,0,0.1); }
+        .zodiac-badge i { color:var(--primary); }
+        .card-info { padding:20px; flex:1; display:flex; flex-direction:column; justify-content:space-between; }
+        .user-name { font-size:24px; font-weight:700; margin-bottom:5px; }
+        .user-details { display:flex; gap:15px; margin-bottom:15px; color:#666; flex-wrap:wrap; }
+        .user-details span { display:flex; align-items:center; gap:5px; }
+        .hobbies { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+        .hobby-tag { background:#f0f0f0; padding:5px 12px; border-radius:20px; font-size:12px; font-weight:600; }
+        .action-buttons { display:flex; justify-content:center; gap:30px; padding:20px; background:white; position:relative; z-index:5; }
+        .action-btn { width:70px; height:70px; border-radius:50%; display:flex; justify-content:center; align-items:center; font-size:28px; cursor:pointer; box-shadow:var(--shadow); transition:transform 0.2s ease; }
+        .action-btn:hover { transform:scale(1.1); }
+        .dislike-btn { background:white; color:var(--danger); }
+        .like-btn { background:white; color:var(--success); }
+        .super-like-btn { background:linear-gradient(45deg,#6a11cb,#2575fc); color:white; width:55px; height:55px; font-size:22px; }
+        .filters { position:absolute; bottom:100px; left:50%; transform:translateX(-50%); background:white; padding:12px 20px; border-radius:30px; display:flex; gap:15px; box-shadow:var(--shadow); z-index:4; }
+        .filter-btn { display:flex; flex-direction:column; align-items:center; gap:5px; cursor:pointer; }
+        .filter-btn i { font-size:20px; color:var(--dark); }
+        .filter-btn span { font-size:12px; font-weight:600; }
+        .match-notification { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:white; padding:30px; border-radius:20px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.3); z-index:20; display:none; }
+        .match-icon { font-size:60px; color:var(--success); margin-bottom:20px; }
+        .match-text { font-size:24px; font-weight:700; margin-bottom:20px; color:var(--dark); }
+        .match-btn { background:var(--primary); color:white; border:none; padding:12px 30px; border-radius:30px; font-weight:600; cursor:pointer; font-size:16px; margin-top:15px; }
+        .gender-filter-modal { position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); display:flex; justify-content:center; align-items:center; z-index:30; display:none; }
+        .gender-filter-content { background:white; width:90%; max-width:400px; border-radius:20px; padding:30px; }
+        .gender-filter-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:25px; }
+        .gender-filter-header h2 { font-size:22px; font-weight:700; }
+        .close-btn { background:none; border:none; font-size:24px; cursor:pointer; color:#999; }
+        .gender-options { display:grid; grid-template-columns:repeat(3,1fr); gap:15px; margin-bottom:25px; }
+        .gender-option { border:2px solid #e0e0e0; border-radius:15px; padding:15px 10px; text-align:center; cursor:pointer; transition:all 0.2s ease; }
+        .gender-option:hover, .gender-option.active { border-color:var(--primary); background:rgba(255,77,109,0.1); }
+        .gender-option i { font-size:24px; margin-bottom:8px; color:var(--primary); }
+        .save-btn { background:var(--primary); color:white; border:none; padding:14px; border-radius:15px; font-weight:600; font-size:16px; cursor:pointer; width:100%; }
+        .no-profiles { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); text-align:center; color:#666; z-index:10; display:none; }
+        .no-profiles i { font-size:60px; margin-bottom:20px; color:#ccc; }
+        .auth-screen { position:absolute; top:0; left:0; width:100%; height:100%; background:white; display:flex; flex-direction:column; justify-content:center; align-items:center; padding:30px; z-index:100; }
+        .auth-form { width:100%; max-width:350px; }
+        .auth-form h2 { text-align:center; margin-bottom:20px; color:var(--dark); }
+        .form-group { margin-bottom:15px; }
+        .form-group input { width:100%; padding:12px; border:1px solid #ddd; border-radius:10px; font-size:16px; }
+        .btn { width:100%; padding:14px; border:none; border-radius:10px; font-size:16px; font-weight:600; cursor:pointer; }
+        .btn-primary { background:var(--primary); color:white; }
+        .btn-outline { background:transparent; color:var(--primary); border:2px solid var(--primary); margin-top:10px; }
+        .profile-setup { display:none; }
+        @media (max-width:500px) { .app-container { height:100vh; border-radius:0; } .card { width:95%; } }
+    </style>
+</head>
+<body>
+    <!-- Authentication Screen -->
+    <div class="auth-screen" id="auth-screen">
+        <div class="auth-form">
+            <h2>Welcome to ZodiacMatch</h2>
+            <div class="form-group">
+                <input type="email" id="email" placeholder="Email" required>
+            </div>
+            <div class="form-group">
+                <input type="password" id="password" placeholder="Password" required>
+            </div>
+            <button class="btn btn-primary" id="login-btn">Log In</button>
+            <button class="btn btn-outline" id="signup-btn">Sign Up</button>
+        </div>
+    </div>
+
+    <!-- Profile Setup Screen -->
+    <div class="auth-screen profile-setup" id="profile-setup">
+        <div class="auth-form">
+            <h2>Complete Your Profile</h2>
+            <div class="form-group">
+                <input type="text" id="display-name" placeholder="Your Name" required>
+            </div>
+            <div class="form-group">
+                <input type="number" id="user-age" placeholder="Age" min="18" max="100" required>
+            </div>
+            <div class="form-group">
+                <select id="user-gender" required>
+                    <option value="">Select Gender</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Non-binary">Non-binary</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <select id="user-zodiac" required>
+                    <option value="">Select Zodiac Sign</option>
+                    <option value="Aries">Aries</option>
+                    <option value="Taurus">Taurus</option>
+                    <option value="Gemini">Gemini</option>
+                    <option value="Cancer">Cancer</option>
+                    <option value="Leo">Leo</option>
+                    <option value="Virgo">Virgo</option>
+                    <option value="Libra">Libra</option>
+                    <option value="Scorpio">Scorpio</option>
+                    <option value="Sagittarius">Sagittarius</option>
+                    <option value="Capricorn">Capricorn</option>
+                    <option value="Aquarius">Aquarius</option>
+                    <option value="Pisces">Pisces</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <input type="text" id="user-hobbies" placeholder="Hobbies (comma separated)" required>
+            </div>
+            <button class="btn btn-primary" id="save-profile-btn">Save Profile</button>
+        </div>
+    </div>
+
+    <!-- Main App (Hidden until auth) -->
+    <div class="app-container" id="main-app" style="display:none;">
+        <div class="app-header">
+            <div class="logo">
+                <i class="fas fa-star"></i>
+                <h1>ZodiacMatch</h1>
+            </div>
+            <div class="header-icons">
+                <i class="fas fa-bolt" id="boost-btn"></i>
+                <i class="fas fa-comments" id="messages-btn"></i>
+                <i class="fas fa-user" id="profile-btn"></i>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="card-stack" id="card-stack"></div>
+            <div class="no-profiles" id="no-profiles">
+                <i class="fas fa-user-friends"></i>
+                <h3>No more profiles nearby</h3>
+                <p>Try adjusting your filters</p>
+            </div>
+
+            <div class="action-buttons">
+                <div class="action-btn dislike-btn" id="dislike-btn">
+                    <i class="fas fa-times"></i>
+                </div>
+                <div class="action-btn super-like-btn" id="super-like-btn">
+                    <i class="fas fa-star"></i>
+                </div>
+                <div class="action-btn like-btn" id="like-btn">
+                    <i class="fas fa-heart"></i>
+                </div>
+            </div>
+
+            <div class="filters">
+                <div class="filter-btn" id="distance-filter">
+                    <i class="fas fa-location-arrow"></i>
+                    <span id="distance-value">50 km</span>
+                </div>
+                <div class="filter-btn" id="age-filter">
+                    <i class="fas fa-birthday-cake"></i>
+                    <span id="age-value">22-30</span>
+                </div>
+                <div class="filter-btn" id="gender-filter">
+                    <i class="fas fa-venus-mars"></i>
+                    <span id="gender-value">Everyone</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="match-notification" id="match-notification">
+            <div class="match-icon">
+                <i class="fas fa-heart"></i>
+            </div>
+            <div class="match-text">It's a Match!</div>
+            <p id="match-name">You and <span></span> have liked each other</p>
+            <button class="match-btn" id="message-btn">Send Message</button>
+            <button class="match-btn" style="background:#6c757d;margin-top:10px;" id="continue-btn">Keep Swiping</button>
+        </div>
+
+        <div class="gender-filter-modal" id="gender-filter-modal">
+            <div class="gender-filter-content">
+                <div class="gender-filter-header">
+                    <h2>Gender Preference</h2>
+                    <button class="close-btn" id="close-gender-modal">&times;</button>
+                </div>
+                <div class="gender-options" id="gender-options"></div>
+                <button class="save-btn" id="save-gender-btn">Save Preferences</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+
+    <script>
+        // ⚠️ REPLACE WITH YOUR FIREBASE CONFIG ⚠️
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+
+        // DOM Elements
+        const authScreen = document.getElementById('auth-screen');
+        const profileSetup = document.getElementById('profile-setup');
+        const mainApp = document.getElementById('main-app');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const loginBtn = document.getElementById('login-btn');
+        const signupBtn = document.getElementById('signup-btn');
+        const displayNameInput = document.getElementById('display-name');
+        const userAgeInput = document.getElementById('user-age');
+        const userGenderSelect = document.getElementById('user-gender');
+        const userZodiacSelect = document.getElementById('user-zodiac');
+        const userHobbiesInput = document.getElementById('user-hobbies');
+        const saveProfileBtn = document.getElementById('save-profile-btn');
+        const cardStack = document.getElementById('card-stack');
+        const noProfiles = document.getElementById('no-profiles');
+        const matchNotification = document.getElementById('match-notification');
+        const matchName = document.getElementById('match-name').querySelector('span');
+        const messageBtn = document.getElementById('message-btn');
+        const continueBtn = document.getElementById('continue-btn');
+        const genderFilterModal = document.getElementById('gender-filter-modal');
+        const genderValue = document.getElementById('gender-value');
+        const ageValue = document.getElementById('age-value');
+        const distanceValue = document.getElementById('distance-value');
+        const genderOptions = document.getElementById('gender-options');
+        const saveGenderBtn = document.getElementById('save-gender-btn');
+        const closeGenderModal = document.getElementById('close-gender-modal');
+        const genderFilterBtn = document.getElementById('gender-filter');
+        const ageFilterBtn = document.getElementById('age-filter');
+        const distanceFilterBtn = document.getElementById('distance-filter');
+        const likeBtn = document.getElementById('like-btn');
+        const dislikeBtn = document.getElementById('dislike-btn');
+        const superLikeBtn = document.getElementById('super-like-btn');
+
+        // App state
+        let currentUser = null;
+        let currentLocation = null;
+        let currentGenderPreference = "Everyone";
+        let minAge = 22;
+        let maxAge = 30;
+        let maxDistance = 50;
+
+        // Initialize app
+        function initApp() {
+            // Check if user is already logged in
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    currentUser = user;
+                    checkUserProfile();
+                } else {
+                    showAuthScreen();
+                }
+            });
+
+            // Get user's location
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        currentLocation = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude
+                        };
+                    },
+                    (error) => {
+                        console.warn("Geolocation error:", error);
+                        // Default to NYC if location not available
+                        currentLocation = { lat: 40.7128, lng: -74.0060 };
+                    }
+                );
+            } else {
+                currentLocation = { lat: 40.7128, lng: -74.0060 };
+            }
+        }
+
+        // Show authentication screen
+        function showAuthScreen() {
+            authScreen.style.display = 'flex';
+            profileSetup.style.display = 'none';
+            mainApp.style.display = 'none';
+        }
+
+        // Show profile setup screen
+        function showProfileSetup() {
+            authScreen.style.display = 'none';
+            profileSetup.style.display = 'flex';
+            mainApp.style.display = 'none';
+        }
+
+        // Show main app
+        function showMainApp() {
+            authScreen.style.display = 'none';
+            profileSetup.style.display = 'none';
+            mainApp.style.display = 'flex';
+            renderGenderOptions();
+            loadProfiles();
+        }
+
+        // Check if user has completed profile
+        async function checkUserProfile() {
+            const userDoc = await db.collection('users').doc(currentUser.uid).get();
+            if (userDoc.exists) {
+                showMainApp();
+            } else {
+                showProfileSetup();
+            }
+        }
+
+        // Authentication functions
+        loginBtn.addEventListener('click', async () => {
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            try {
+                await auth.signInWithEmailAndPassword(email, password);
+            } catch (error) {
+                alert('Login failed: ' + error.message);
+            }
+        });
+
+        signupBtn.addEventListener('click', async () => {
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            try {
+                await auth.createUserWithEmailAndPassword(email, password);
+            } catch (error) {
+                alert('Signup failed: ' + error.message);
+            }
+        });
+
+        // Save user profile
+        saveProfileBtn.addEventListener('click', async () => {
+            const name = displayNameInput.value;
+            const age = parseInt(userAgeInput.value);
+            const gender = userGenderSelect.value;
+            const zodiac = userZodiacSelect.value;
+            const hobbies = userHobbiesInput.value.split(',').map(h => h.trim()).filter(h => h);
+
+            if (!name || !age || !gender || !zodiac || hobbies.length === 0) {
+                alert('Please fill all fields');
+                return;
+            }
+
+            try {
+                await db.collection('users').doc(currentUser.uid).set({
+                    name,
+                    age,
+                    gender,
+                    zodiac,
+                    hobbies,
+                    location: currentLocation,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                showMainApp();
+            } catch (error) {
+                alert('Profile save failed: ' + error.message);
+            }
+        });
+
+        // Render gender options
+        function renderGenderOptions() {
+            const options = [
+                { value: "Everyone", icon: "venus-mars", label: "Everyone" },
+                { value: "Men", icon: "mars", label: "Men" },
+                { value: "Women", icon: "venus", label: "Women" },
+                { value: "Non-binary", icon: "transgender", label: "Non-binary" },
+                { value: "Other", icon: "genderless", label: "Other" }
+            ];
+            
+            genderOptions.innerHTML = '';
+            options.forEach(option => {
+                const div = document.createElement('div');
+                div.className = 'gender-option';
+                if (option.value === currentGenderPreference) {
+                    div.classList.add('active');
+                }
+                div.innerHTML = `
+                    <i class="fas fa-${option.icon}"></i>
+                    <div>${option.label}</div>
+                `;
+                div.dataset.value = option.value;
+                genderOptions.appendChild(div);
+            });
+        }
+
+        // Calculate distance between two points (in km)
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; // Earth radius in km
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = 
+                Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+
+        // Load profiles from Firestore
+        async function loadProfiles() {
+            if (!currentUser || !currentLocation) return;
+            
+            cardStack.innerHTML = '';
+            noProfiles.style.display = 'none';
+            
+            try {
+                // Get current user's profile
+                const userDoc = await db.collection('users').doc(currentUser.uid).get();
+                if (!userDoc.exists) return;
+                
+                const currentUserData = userDoc.data();
+                
+                // Query other users
+                const usersSnapshot = await db.collection('users')
+                    .where(firebase.firestore.FieldValue.documentId(), '!=', currentUser.uid)
+                    .get();
+                
+                const profiles = [];
+                usersSnapshot.forEach(doc => {
+                    const data = doc.data();
+                    const distance = calculateDistance(
+                        currentLocation.lat, 
+                        currentLocation.lng,
+                        data.location.lat,
+                        data.location.lng
+                    );
+                    
+                    // Apply filters
+                    if (distance > maxDistance) return;
+                    if (data.age < minAge || data.age > maxAge) return;
+                    if (currentGenderPreference !== "Everyone") {
+                        if (currentGenderPreference === "Men" && data.gender !== "Male") return;
+                        if (currentGenderPreference === "Women" && data.gender !== "Female") return;
+                        if (currentGenderPreference === "Non-binary" && data.gender !== "Non-binary") return;
+                    }
+                    
+                    // Check if already liked
+                    const likeDoc = db.collection('likes')
+                        .doc(currentUser.uid)
+                        .collection('received')
+                        .doc(doc.id);
+                    // We'll assume not liked for simplicity in this demo
+                    
+                    profiles.push({
+                        id: doc.id,
+                        ...data,
+                        distance: Math.round(distance)
+                    });
+                });
+                
+                if (profiles.length === 0) {
+                    noProfiles.style.display = 'block';
+                    return;
+                }
+                
+                // Render cards
+                profiles.forEach((profile, index) => {
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.dataset.id = profile.id;
+                    card.style.zIndex = profiles.length - index;
+                    card.style.transform = `scale(${0.95 - (index * 0.02)}) translateY(${index * 10}px)`;
+                    card.style.opacity = index === 0 ? '1' : '0.9';
+                    
+                    // Use a default image if no photo
+                    const imageUrl = profile.photoUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=774&q=80';
+                    
+                    card.innerHTML = `
+                        <div class="card-image" style="background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.2)), url('${imageUrl}') no-repeat center center;"></div>
+                        <div class="card-info">
+                            <div>
+                                <h2 class="user-name">${profile.name}</h2>
+                                <div class="user-details">
+                                    <span><i class="fas fa-map-marker-alt"></i> ${profile.distance} km away</span>
+                                    <span><i class="fas fa-birthday-cake"></i> ${profile.age}</span>
+                                    <span><i class="fas fa-${profile.gender === 'Male' ? 'mars' : profile.gender === 'Female' ? 'venus' : 'transgender'}"></i> ${profile.gender}</span>
+                                </div>
+                            </div>
+                            <div class="hobbies">
+                                ${profile.hobbies.map(hobby => `<div class="hobby-tag">${hobby}</div>`).join('')}
+                            </div>
+                            <div class="zodiac-badge">
+                                <i class="fas fa-star"></i>
+                                <span>${profile.zodiac}</span>
+                            </div>
+                        </div>
+                    `;
+                    
+                    cardStack.appendChild(card);
+                });
+                
+                // Setup swipe listeners
+                setupSwipeListeners();
+            } catch (error) {
+                console.error("Error loading profiles:", error);
+                alert("Failed to load profiles");
+            }
+        }
+
+        // Setup swipe listeners
+        function setupSwipeListeners() {
+            likeBtn.onclick = () => handleLike(false);
+            dislikeBtn.onclick = () => handleDislike();
+            superLikeBtn.onclick = () => handleLike(true);
+            
+            // Card swipe with mouse/touch (same as before)
+            let isDragging = false;
+            let startPosX = 0;
+            let currentX = 0;
+            
+            if (cardStack.children.length > 0) {
+                const card = cardStack.children[0];
+                card.addEventListener('mousedown', startDrag);
+                card.addEventListener('touchstart', startDrag);
+            }
+            
+            function startDrag(e) {
+                isDragging = true;
+                startPosX = e.type === 'mousedown' ? e.clientX : e.touches[0].clientX;
+                const card = e.currentTarget;
+                card.style.transition = 'none';
+                
+                const moveHandler = (e) => {
+                    if (!isDragging) return;
+                    currentX = e.type === 'mousemove' ? e.clientX : e.touches[0].clientX;
+                    const diffX = currentX - startPosX;
+                    const rotate = diffX * 0.1;
+                    card.style.transform = `translateX(${diffX}px) rotate(${rotate}deg)`;
+                    
+                    if (diffX > 100) {
+                        card.style.boxShadow = '0 0 30px var(--success)';
+                    } else if (diffX < -100) {
+                        card.style.boxShadow = '0 0 30px var(--danger)';
+                    } else {
+                        card.style.boxShadow = 'var(--shadow)';
+                    }
+                };
+                
+                const endHandler = () => {
+                    if (!isDragging) return;
+                    const diffX = currentX - startPosX;
+                    
+                    if (Math.abs(diffX) > 100) {
+                        if (diffX > 100) {
+                            handleLike(false);
+                        } else {
+                            handleDislike();
+                        }
+                    } else {
+                        card.style.transition = 'transform 0.3s ease';
+                        card.style.transform = 'translateX(0) rotate(0)';
+                        card.style.boxShadow = 'var(--shadow)';
+                    }
+                    
+                    isDragging = false;
+                    document.removeEventListener('mousemove', moveHandler);
+                    document.removeEventListener('touchmove', moveHandler);
+                    document.removeEventListener('mouseup', endHandler);
+                    document.removeEventListener('touchend', endHandler);
+                };
+                
+                document.addEventListener('mousemove', moveHandler);
+                document.addEventListener('touchmove', moveHandler);
+                document.addEventListener('mouseup', endHandler);
+                document.addEventListener('touchend', endHandler);
+            }
+        }
+
+        // Handle like action
+        async function handleLike(isSuperLike) {
+            if (cardStack.children.length === 0) return;
+            
+            const card = cardStack.children[0];
+            const profileId = card.dataset.id;
+            
+            try {
+                // Save like to Firestore
+                await db.collection('likes').doc(currentUser.uid).collection('sent').doc(profileId).set({
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    superLike: isSuperLike
+                });
+                
+                // Check if it's a match
+                const receivedLike = await db.collection('likes').doc(profileId).collection('sent').doc(currentUser.uid).get();
+                if (receivedLike.exists) {
+                    // Create match
+                    await db.collection('matches').doc(currentUser.uid).collection('matches').doc(profileId).set({
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                        matchedUserId: profileId
+                    });
+                    await db.collection('matches').doc(profileId).collection('matches').doc(currentUser.uid).set({
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                        matchedUserId: currentUser.uid
+                    });
+                    
+                    // Get profile name for notification
+                    const profileDoc = await db.collection('users').doc(profileId).get();
+                    if (profileDoc.exists) {
+                        showMatchNotification(profileDoc.data().name);
+                    }
+                }
+                
+                // Remove card
+                card.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+                card.style.transform = `translateX(${window.innerWidth}px) rotate(20deg)`;
+                card.style.opacity = '0';
+                
+                setTimeout(() => {
+                    card.remove();
+                    if (cardStack.children.length === 0) {
+                        loadProfiles();
+                    }
+                }, 300);
+            } catch (error) {
+                console.error("Error liking profile:", error);
+                alert("Failed to like profile");
+            }
+        }
+
+        // Handle dislike action
+        function handleDislike() {
+            if (cardStack.children.length === 0) return;
+            
+            const card = cardStack.children[0];
+            card.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+            card.style.transform = `translateX(${-window.innerWidth}px) rotate(-20deg)`;
+            card.style.opacity = '0';
+            
+            setTimeout(() => {
+                card.remove();
+                if (cardStack.children.length === 0) {
+                    loadProfiles();
+                }
+            }, 300);
+        }
+
+        // Show match notification
+        function showMatchNotification(name) {
+            matchName.textContent = name;
+            matchNotification.style.display = 'block';
+        }
+
+        // Gender filter modal
+        genderFilterBtn.addEventListener('click', () => {
+            genderFilterModal.style.display = 'flex';
+        });
+        
+        closeGenderModal.addEventListener('click', () => {
+            genderFilterModal.style.display = 'none';
+        });
+        
+        genderOptions.addEventListener('click', (e) => {
+            if (e.target.classList.contains('gender-option') || e.target.parentElement.classList.contains('gender-option')) {
+                const option = e.target.classList.contains('gender-option') ? e.target : e.target.parentElement;
+                document.querySelectorAll('.gender-option').forEach(opt => opt.classList.remove('active'));
+                option.classList.add('active');
+                currentGenderPreference = option.dataset.value;
+                genderValue.textContent = option.querySelector('div').textContent;
+            }
+        });
+        
+        saveGenderBtn.addEventListener('click', () => {
+            genderFilterModal.style.display = 'none';
+            loadProfiles();
+        });
+
+        // Initialize the app
+        initApp();
+    </script>
+</body>
+</html>
