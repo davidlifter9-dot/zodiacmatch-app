@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>ZodiacMatch Test</title>
+</head>
+<body>
+  <h1>Firebase Test</h1>
+  <input id="email" placeholder="Email" value="test@test.com">
+  <input id="password" placeholder="Password" value="password123">
+  <button onclick="signUp()">Sign Up</button>
+  <div id="status"></div>
+
+  <!-- MUST LOAD SDK FIRST -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+
+  <script>
+    // PASTE YOUR REAL CONFIG HERE (from Firebase Console)
+    const firebaseConfig = {
+  apiKey: "AIzaSyD1Qny8AxB-5WJu5_SuN4ycWbEh00BlB5E",
+  authDomain: "zodiacmatch-a7679.firebaseapp.com",
+  projectId: "zodiacmatch-a7679",
+  storageBucket: "zodiacmatch-a7679.firebasestorage.app",
+  messagingSenderId: "526590211707",
+  appId: "1:526590211707:web:de743a63445fc3b3a394de"
+    };
+
+    // INITIALIZE FIREBASE - THIS IS NON-NEGOTIABLE
+    firebase.initializeApp(firebaseConfig);
+    
+    // Test function
+    function signUp() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      
+      firebase.auth().createUserWithEmailAndPassword(email, password)
+        .then((userCredential) => {
+          document.getElementById('status').innerText = 'SUCCESS! User created: ' + userCredential.user.email;
+        })
+        .catch((error) => {
+          document.getElementById('status').innerText = 'ERROR: ' + error.message;
+          console.error('Signup failed:', error);
+        });
+    }
+  </script>
+</body>
+</html>
